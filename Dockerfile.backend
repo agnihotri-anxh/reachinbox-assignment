@@ -1,9 +1,9 @@
 # Build stage
 FROM node:18-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/backend
 
-# Copy package files
+# Copy backend package files
 COPY backend/package*.json ./
 COPY backend/tsconfig.json ./
 COPY backend/prisma ./prisma
@@ -20,7 +20,7 @@ RUN npm run build && npm run db:generate
 # Production stage
 FROM node:18-alpine
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Copy package files
 COPY backend/package*.json ./
@@ -30,7 +30,7 @@ COPY backend/prisma ./prisma
 RUN npm ci --only=production
 
 # Copy built application from builder
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/backend/dist ./dist
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
