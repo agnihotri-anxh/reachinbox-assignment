@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  name      String
+  avatar    String?
+  emailJobs EmailJob[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model EmailJob {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  recipientEmail  String
+  subject         String
+  body            String
+  scheduledTime   DateTime
+  sentTime        DateTime?
+  status          EmailStatus @default(SCHEDULED)
+  jobId           String?  @unique // BullMQ job ID for idempotency
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledTime])
+}
+
+enum EmailStatus {
+  SCHEDULED
+  PROCESSING
+  SENT
+  FAILED
+}
+
+model RateLimit {
+  id        String   @id @default(uuid())
+  key       String   // Format: "hour:{timestamp}:sender:{senderId}" or "hour:{timestamp}:global"
+  count     Int      @default(0)
+  hourStart DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key])
+  @@index([hourStart])
+}
