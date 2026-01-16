@@ -49,7 +49,10 @@ app.listen(PORT, () => {
     }
   };
 
-  connectRedis();
+  // Don't block startup on Redis
+  connectRedis().catch(() => {
+    console.warn('⚠️  Running without email queue - Redis unavailable');
+  });
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
