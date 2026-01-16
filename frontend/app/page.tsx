@@ -10,6 +10,8 @@ import { EmailList } from '@/components/EmailList'
 import { EmailDetail } from '@/components/EmailDetail'
 import { getScheduledEmails, getSentEmails, createOrGetUser, EmailJob } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   const { data: session, status } = useSession()
   const searchParams = useSearchParams()
