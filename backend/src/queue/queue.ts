@@ -28,5 +28,3 @@ export const emailQueue = new Queue(config.queue.name, {
     },
   },
 });
-
-export { redisConnection };
