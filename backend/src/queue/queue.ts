@@ -7,9 +7,24 @@ export const redisOptions = {
   port: config.redis.port,
   password: config.redis.password,
   maxRetriesPerRequest: null,
+  retryStrategy: (times: number) => {
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  },
+  enableReadyCheck: false,
+  enableOfflineQueue: true,
+  lazyConnect: true,
 };
 
 export const redisConnection = new Redis(redisOptions);
+
+redisConnection.on('error', (err) => {
+  console.log('❌ Redis connection error:', err.message);
+});
+
+redisConnection.on('connect', () => {
+  console.log('✅ Redis connected');
+});
 
 export const emailQueue = new Queue(config.queue.name, {
   connection: redisOptions,

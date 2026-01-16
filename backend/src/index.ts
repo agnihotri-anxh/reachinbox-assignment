@@ -4,6 +4,7 @@ import { config } from './config/env';
 import emailRoutes from './routes/emails.routes';
 import authRoutes from './routes/auth.routes';
 import { createEmailWorker } from './queue/worker';
+import { redisConnection } from './queue/queue';
 
 const app = express();
 
@@ -25,27 +26,37 @@ app.get('/health', (req, res) => {
 
 // Start server
 const PORT = config.port;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📧 Email queue: ${config.queue.name}`);
   console.log(`⚙️  Worker concurrency: ${config.worker.concurrency}`);
   console.log(`⏱️  Min delay between emails: ${config.rateLimit.minDelayBetweenEmails}ms`);
   console.log(`📊 Max emails per hour: ${config.rateLimit.maxEmailsPerHour}`);
-});
 
-// Start email worker
-const worker = createEmailWorker();
-console.log('✅ Email worker started');
+  // Connect to Redis with retry
+  try {
+    await redisConnection.connect();
+    console.log('✅ Connected to Redis');
+  } catch (error) {
+    console.error('Failed to connect to Redis:', error);
+  }
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully...');
-  await worker.close();
-  process.exit(0);
-});
+  // Start email worker
+  const worker = createEmailWorker();
+  console.log('✅ Email worker started');
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully...');
-  await worker.close();
-  process.exit(0);
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    await redisConnection.quit();
+    await worker.close();
+    process.exit(0);
+  });
+
+  process.on('SIGINT', async () => {
+    console.log('SIGINT received, shutting down gracefully...');
+    await redisConnection.quit();
+    await worker.close();
+    process.exit(0);
+  });
 });
