@@ -26,37 +26,49 @@ app.get('/health', (req, res) => {
 
 // Start server
 const PORT = config.port;
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📧 Email queue: ${config.queue.name}`);
   console.log(`⚙️  Worker concurrency: ${config.worker.concurrency}`);
   console.log(`⏱️  Min delay between emails: ${config.rateLimit.minDelayBetweenEmails}ms`);
   console.log(`📊 Max emails per hour: ${config.rateLimit.maxEmailsPerHour}`);
 
-  // Connect to Redis with retry
-  try {
-    await redisConnection.connect();
-    console.log('✅ Connected to Redis');
-  } catch (error) {
-    console.error('Failed to connect to Redis:', error);
-  }
+  // Connect to Redis with retry (non-blocking)
+  const connectRedis = async () => {
+    try {
+      await redisConnection.connect();
+      console.log('✅ Connected to Redis');
+      
+      // Start email worker only after Redis is ready
+      const worker = createEmailWorker();
+      console.log('✅ Email worker started');
+    } catch (error) {
+      console.error('Failed to connect to Redis, retrying...', error);
+      // Retry after 5 seconds
+      setTimeout(connectRedis, 5000);
+    }
+  };
 
-  // Start email worker
-  const worker = createEmailWorker();
-  console.log('✅ Email worker started');
+  connectRedis();
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully...');
-    await redisConnection.quit();
-    await worker.close();
+    try {
+      await redisConnection.quit();
+    } catch (error) {
+      console.error('Error closing Redis:', error);
+    }
     process.exit(0);
   });
 
   process.on('SIGINT', async () => {
     console.log('SIGINT received, shutting down gracefully...');
-    await redisConnection.quit();
-    await worker.close();
+    try {
+      await redisConnection.quit();
+    } catch (error) {
+      console.error('Error closing Redis:', error);
+    }
     process.exit(0);
   });
 });

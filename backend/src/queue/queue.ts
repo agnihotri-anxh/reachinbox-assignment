@@ -8,12 +8,16 @@ export const redisOptions = {
   password: config.redis.password,
   maxRetriesPerRequest: null,
   retryStrategy: (times: number) => {
-    const delay = Math.min(times * 50, 2000);
+    const delay = Math.min(times * 100, 5000);
+    console.log(`📍 Redis retry attempt ${times}, waiting ${delay}ms...`);
     return delay;
   },
+  reconnectOnError: () => true,
   enableReadyCheck: false,
   enableOfflineQueue: true,
   lazyConnect: true,
+  connectTimeout: 10000,
+  commandTimeout: 10000,
 };
 
 export const redisConnection = new Redis(redisOptions);
@@ -24,6 +28,10 @@ redisConnection.on('error', (err) => {
 
 redisConnection.on('connect', () => {
   console.log('✅ Redis connected');
+});
+
+redisConnection.on('ready', () => {
+  console.log('✅ Redis ready');
 });
 
 export const emailQueue = new Queue(config.queue.name, {
