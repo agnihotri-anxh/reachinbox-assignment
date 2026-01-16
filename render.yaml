@@ -19,6 +19,20 @@ services:
           property: connectionString
       - key: PORT
         value: 10000
+      - key: FRONTEND_URL
+        value: https://reachinbox-frontend.onrender.com
+      - key: MAX_EMAILS_PER_HOUR
+        value: 200
+      - key: MIN_DELAY_BETWEEN_EMAILS_MS
+        value: 2000
+      - key: WORKER_CONCURRENCY
+        value: 5
+      - key: QUEUE_NAME
+        value: email-queue
+      - key: GOOGLE_CLIENT_ID
+        value: placeholder
+      - key: GOOGLE_CLIENT_SECRET
+        value: placeholder
     autoDeploy: true
 
   # Frontend Service
@@ -36,6 +50,10 @@ services:
         value: https://reachinbox-frontend.onrender.com
       - key: NEXTAUTH_SECRET
         generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        value: placeholder
+      - key: GOOGLE_CLIENT_SECRET
+        value: placeholder
 
   # Redis Service
   - type: redis

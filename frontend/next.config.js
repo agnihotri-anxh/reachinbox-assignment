@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  skipMiddlewareValidation: true,
+  staticPageGenerationTimeout: 120,
   images: {
     remotePatterns: [
       {
