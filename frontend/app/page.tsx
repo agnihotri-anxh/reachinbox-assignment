@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession, signIn } from 'next-auth/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Sidebar } from '@/components/Sidebar'
 import { TopBar } from '@/components/TopBar'
@@ -12,7 +12,7 @@ import { getScheduledEmails, getSentEmails, createOrGetUser, EmailJob } from '@/
 
 export const dynamic = 'force-dynamic'
 
-export default function Home() {
+function HomeContent() {
   const { data: session, status } = useSession()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -191,5 +191,13 @@ export default function Home() {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>}>
+      <HomeContent />
+    </Suspense>
   )
 }
